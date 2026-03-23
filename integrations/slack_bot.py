@@ -3,9 +3,11 @@ from slack_bolt.adapter.socket_mode import SocketModeHandler
 from config import SLACK_BOT_TOKEN, SLACK_APP_TOKEN
 from assistant import process_message
 from ai.claude_client import ask_claude
+from integrations.gmail_reader import fetch_unread_emails, summarize_emails
 
 # Initialize the Slack app
 app = App(token=SLACK_BOT_TOKEN)
+
 
 @app.event("app_mention")
 def handle_mention(event, say):
@@ -20,7 +22,12 @@ def handle_mention(event, say):
 
         print(f"📩 Mention from {user}: {clean}")
 
-        response = process_message(clean, ask_ai=ask_claude)
+        response = process_message(
+            clean,
+            ask_ai      = ask_claude,
+            fetch_emails = fetch_unread_emails,
+            summarize   = summarize_emails
+        )
         say(f"<@{user}> {response}")
 
     except Exception as e:
@@ -47,7 +54,12 @@ def handle_dm(event, say):
 
         print(f"📩 DM from {user}: {text}")
 
-        response = process_message(text, ask_ai=ask_claude)
+        response = process_message(
+            text,
+            ask_ai       = ask_claude,
+            fetch_emails = fetch_unread_emails,
+            summarize    = summarize_emails
+        )
         say(response)
 
     except Exception as e:

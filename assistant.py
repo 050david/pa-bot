@@ -2,6 +2,7 @@ def parse_command(text: str) -> str:
     """
     Takes the user's message and figures out what they want.
     Returns a command string.
+    Pure function — no side effects.
     """
     text = text.lower().strip()
 
@@ -20,6 +21,7 @@ def parse_command(text: str) -> str:
 def handle_help() -> str:
     """
     Returns a help message showing available commands.
+    Pure function — no side effects.
     """
     return """
 👋 *Here's what I can do:*
@@ -36,7 +38,7 @@ _I also send you an automatic briefing every morning at 7:30 AM WAT_ ⏰
 def handle_chat(text: str, ask_ai) -> str:
     """
     Handles general conversation.
-    Pure function — AI function is passed in, not hardcoded.
+    Pure function — ask_ai is injected, not hardcoded.
     """
     prompt = f"""You are a helpful personal assistant called PA Bot working at JiBiFlow.
 Be concise, friendly and professional.
@@ -46,7 +48,16 @@ User message: {text}"""
     return ask_ai(prompt)
 
 
-def process_message(text: str, ask_ai) -> str:
+def handle_emails(ask_ai, fetch_emails, summarize) -> str:
+    """
+    Fetches and summarizes unread emails.
+    Pure function — ask_ai, fetch_emails and summarize are all injected.
+    """
+    emails = fetch_emails(max_results=5)
+    return summarize(emails, ask_ai)
+
+
+def process_message(text: str, ask_ai, fetch_emails, summarize) -> str:
     """
     Main router — takes a message and returns the right response.
     Pure function — all dependencies are injected.
@@ -56,7 +67,7 @@ def process_message(text: str, ask_ai) -> str:
     if command == "help":
         return handle_help()
     elif command == "emails":
-        return "📧 Fetching your emails... (coming soon!)"
+        return handle_emails(ask_ai, fetch_emails, summarize)
     elif command == "calendar":
         return "📅 Checking your calendar... (coming soon!)"
     elif command == "brief":
