@@ -1,27 +1,32 @@
-import anthropic
-from config import ANTHROPIC_API_KEY
+from groq import Groq
+from dotenv import load_dotenv
+import os
 
-# Initialize the Claude client
-client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+# Load environment variables
+load_dotenv()
+
+# Initialize the Groq client
+client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 def ask_claude(prompt: str) -> str:
     """
-    Send a prompt to Claude and get a response.
+    Send a prompt to Groq (Llama 3) and get a response.
+    Still called ask_claude so nothing else needs to change.
     Takes a string prompt and returns a string response.
     """
     try:
-        message = client.messages.create(
-            model="claude-3-5-haiku-20241022",
-            max_tokens=1024,
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
             messages=[
                 {
                     "role": "user",
                     "content": prompt
                 }
-            ]
+            ],
+            max_tokens=1024,
         )
-        return message.content[0].text
+        return response.choices[0].message.content
 
     except Exception as e:
-        print(f"❌ Claude API error: {e}")
+        print(f"❌ Groq API error: {e}")
         return "Sorry, I couldn't process that request right now."

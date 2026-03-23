@@ -1,6 +1,7 @@
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 from config import SLACK_BOT_TOKEN, SLACK_APP_TOKEN
+from assistant import process_message
 from ai.claude_client import ask_claude
 
 # Initialize the Slack app
@@ -10,19 +11,17 @@ app = App(token=SLACK_BOT_TOKEN)
 def handle_mention(event, say):
     """
     Handles when someone @mentions the bot in Slack.
-    Takes the message, sends it to Claude, and replies.
+    Routes the message through the assistant logic.
     """
     try:
-        # Get the message text and remove the bot mention
-        user    = event["user"]
-        text    = event["text"]
-        clean   = text.split(">", 1)[-1].strip()
+        user  = event["user"]
+        text  = event["text"]
+        clean = text.split(">", 1)[-1].strip()
 
         print(f"📩 Mention from {user}: {clean}")
 
-        # Send to Claude and get response
-        say(f"<@{user}> Let me think about that... 🤔")
-        response = ask_claude(clean)
+        # Pass ask_claude as the AI function — pure function approach
+        response = process_message(clean, ask_ai=ask_claude)
         say(f"<@{user}> {response}")
 
     except Exception as e:
