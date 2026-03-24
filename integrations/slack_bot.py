@@ -4,6 +4,7 @@ from config import SLACK_BOT_TOKEN, SLACK_APP_TOKEN
 from assistant import process_message
 from ai.claude_client import ask_claude
 from integrations.gmail_reader import fetch_unread_emails, summarize_emails
+from integrations.calendar_reader import get_calendar_service, fetch_todays_events, summarize_calendar
 
 # Initialize the Slack app
 app = App(token=SLACK_BOT_TOKEN)
@@ -24,9 +25,12 @@ def handle_mention(event, say):
 
         response = process_message(
             clean,
-            ask_ai      = ask_claude,
-            fetch_emails = fetch_unread_emails,
-            summarize   = summarize_emails
+            ask_ai           = ask_claude,
+            fetch_emails     = fetch_unread_emails,
+            summarize_emails = summarize_emails,
+            get_cal_service  = get_calendar_service,
+            fetch_events     = fetch_todays_events,
+            summarize_calendar = summarize_calendar
         )
         say(f"<@{user}> {response}")
 
@@ -56,9 +60,12 @@ def handle_dm(event, say):
 
         response = process_message(
             text,
-            ask_ai       = ask_claude,
-            fetch_emails = fetch_unread_emails,
-            summarize    = summarize_emails
+            ask_ai             = ask_claude,
+            fetch_emails       = fetch_unread_emails,
+            summarize_emails   = summarize_emails,
+            get_cal_service    = get_calendar_service,
+            fetch_events       = fetch_todays_events,
+            summarize_calendar = summarize_calendar
         )
         say(response)
 

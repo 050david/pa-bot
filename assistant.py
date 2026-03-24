@@ -51,13 +51,23 @@ User message: {text}"""
 def handle_emails(ask_ai, fetch_emails, summarize) -> str:
     """
     Fetches and summarizes unread emails.
-    Pure function — ask_ai, fetch_emails and summarize are all injected.
+    Pure function — all dependencies injected.
     """
     emails = fetch_emails(max_results=5)
     return summarize(emails, ask_ai)
 
 
-def process_message(text: str, ask_ai, fetch_emails, summarize) -> str:
+def handle_calendar(ask_ai, get_service, fetch_events, summarize) -> str:
+    """
+    Fetches and summarizes today's calendar events.
+    Pure function — all dependencies injected.
+    """
+    service = get_service()
+    events  = fetch_events(service)
+    return summarize(events, ask_ai)
+
+
+def process_message(text: str, ask_ai, fetch_emails, summarize_emails, get_cal_service, fetch_events, summarize_calendar) -> str:
     """
     Main router — takes a message and returns the right response.
     Pure function — all dependencies are injected.
@@ -67,9 +77,9 @@ def process_message(text: str, ask_ai, fetch_emails, summarize) -> str:
     if command == "help":
         return handle_help()
     elif command == "emails":
-        return handle_emails(ask_ai, fetch_emails, summarize)
+        return handle_emails(ask_ai, fetch_emails, summarize_emails)
     elif command == "calendar":
-        return "📅 Checking your calendar... (coming soon!)"
+        return handle_calendar(ask_ai, get_cal_service, fetch_events, summarize_calendar)
     elif command == "brief":
         return "🌅 Preparing your briefing... (coming soon!)"
     else:
