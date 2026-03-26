@@ -7,6 +7,7 @@ from scheduler import start_scheduler
 from ai.claude_client import ask_claude
 from integrations.gmail_reader import fetch_unread_emails, summarize_emails
 from integrations.calendar_reader import get_calendar_service, fetch_todays_events, summarize_calendar
+from integrations.linear_reader import fetch_my_issues, summarize_issues
 from slack_sdk import WebClient
 
 
@@ -43,6 +44,8 @@ def main():
         get_cal_service    = get_calendar_service,
         fetch_events       = fetch_todays_events,
         summarize_calendar = summarize_calendar,
+        fetch_issues       = fetch_my_issues,
+        summarize_issues   = summarize_issues,
     )
 
     # Start the Slack bot (this blocks — runs forever)

@@ -17,6 +17,8 @@ def parse_command(text: str) -> str:
         return "emails"
     elif "calendar" in text or "schedule" in text or "today" in text:
         return "calendar"
+    elif "issue" in text or "task" in text or "linear" in text:
+        return "tasks"
     elif "help" in text:
         return "help"
     else:
@@ -33,6 +35,7 @@ def handle_help() -> str:
 
 📧 `@PA emails` — summarize your unread emails
 📅 `@PA calendar today` — show today's events
+📋 `@PA my issues` — show your open Linear issues
 🌅 `@PA brief me` — full morning briefing
 💬 `@PA <anything>` — chat with me directly
 
@@ -84,7 +87,20 @@ def handle_calendar(ask_ai, get_service, fetch_events, summarize) -> str:
         return "⚠️ Sorry, I couldn't fetch your calendar right now. Please try again later."
 
 
-def handle_brief(ask_ai, fetch_emails, summarize_emails, get_cal_service, fetch_events, summarize_calendar) -> str:
+def handle_linear(ask_ai, fetch_issues, summarize) -> str:
+    """
+    Fetches and summarizes open Linear issues.
+    Pure function — all dependencies injected.
+    """
+    try:
+        issues = fetch_issues()
+        return summarize(issues, ask_ai)
+    except Exception as e:
+        logger.error(f"Error fetching Linear issues: {e}")
+        return "⚠️ Sorry, I couldn't fetch your Linear issues right now. Please try again later."
+
+
+def handle_brief(ask_ai, fetch_emails, summarize_emails, get_cal_service, fetch_events, summarize_calendar, fetch_issues, summarize_issues) -> str:
     """
     Builds the full morning briefing.
     Pure function — all dependencies injected.
@@ -92,11 +108,12 @@ def handle_brief(ask_ai, fetch_emails, summarize_emails, get_cal_service, fetch_
     from scheduler import build_briefing
     return build_briefing(
         ask_ai, fetch_emails, summarize_emails,
-        get_cal_service, fetch_events, summarize_calendar
+        get_cal_service, fetch_events, summarize_calendar,
+        fetch_issues, summarize_issues
     )
 
 
-def process_message(text: str, ask_ai, fetch_emails, summarize_emails, get_cal_service, fetch_events, summarize_calendar) -> str:
+def process_message(text: str, ask_ai, fetch_emails, summarize_emails, get_cal_service, fetch_events, summarize_calendar, fetch_issues, summarize_issues) -> str:
     """
     Main router — takes a message and returns the right response.
     Pure function — all dependencies are injected.
@@ -109,7 +126,9 @@ def process_message(text: str, ask_ai, fetch_emails, summarize_emails, get_cal_s
         return handle_emails(ask_ai, fetch_emails, summarize_emails)
     elif command == "calendar":
         return handle_calendar(ask_ai, get_cal_service, fetch_events, summarize_calendar)
+    elif command == "tasks":
+        return handle_linear(ask_ai, fetch_issues, summarize_issues)
     elif command == "brief":
-        return handle_brief(ask_ai, fetch_emails, summarize_emails, get_cal_service, fetch_events, summarize_calendar)
+        return handle_brief(ask_ai, fetch_emails, summarize_emails, get_cal_service, fetch_events, summarize_calendar, fetch_issues, summarize_issues)
     else:
         return handle_chat(text, ask_ai)

@@ -1,4 +1,3 @@
-# scheduler.py
 import logging
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
@@ -6,9 +5,10 @@ import pytz
 
 logger = logging.getLogger(__name__)
 
-def build_briefing(ask_ai, fetch_emails, summarize_emails, get_cal_service, fetch_events, summarize_calendar) -> str:
+
+def build_briefing(ask_ai, fetch_emails, summarize_emails, get_cal_service, fetch_events, summarize_calendar, fetch_issues, summarize_issues) -> str:
     """
-    Builds the full morning briefing by combining emails + calendar.
+    Builds the full morning briefing by combining emails + calendar + Linear issues.
     Pure function — all dependencies injected.
     """
     try:
@@ -22,6 +22,12 @@ def build_briefing(ask_ai, fetch_emails, summarize_emails, get_cal_service, fetc
     except Exception as e:
         calendar_summary = f"⚠️ Could not fetch calendar: {e}"
 
+    try:
+        issues = fetch_issues()
+        issues_summary = summarize_issues(issues, ask_ai)
+    except Exception as e:
+        issues_summary = f"⚠️ Could not fetch Linear issues: {e}"
+
     briefing = f"""🌅 *Good morning! Here's your daily briefing:*
 
 📧 *Emails*
@@ -29,16 +35,19 @@ def build_briefing(ask_ai, fetch_emails, summarize_emails, get_cal_service, fetc
 
 📅 *Calendar*
 {calendar_summary}
+
+📋 *Linear Issues*
+{issues_summary}
 """
     return briefing.strip()
 
 
-def start_scheduler(slack_client, user_id, ask_ai, fetch_emails, summarize_emails, get_cal_service, fetch_events, summarize_calendar):
+def start_scheduler(slack_client, user_id, ask_ai, fetch_emails, summarize_emails, get_cal_service, fetch_events, summarize_calendar, fetch_issues, summarize_issues):
     """
-    Starts APScheduler to post the morning briefing at 7:30 AM WAT (UTC+0 = 7:30 AM WAT is 07:30 UTC).
+    Starts APScheduler to post the morning briefing at 7:30 AM WAT.
     WAT is UTC+1, so 7:30 AM WAT = 06:30 UTC.
     """
-    wat = pytz.timezone("Africa/Lagos")  # WAT = UTC+1
+    wat = pytz.timezone("Africa/Lagos")
 
     scheduler = BackgroundScheduler(timezone=wat)
 
@@ -47,7 +56,8 @@ def start_scheduler(slack_client, user_id, ask_ai, fetch_emails, summarize_email
         try:
             message = build_briefing(
                 ask_ai, fetch_emails, summarize_emails,
-                get_cal_service, fetch_events, summarize_calendar
+                get_cal_service, fetch_events, summarize_calendar,
+                fetch_issues, summarize_issues
             )
             slack_client.chat_postMessage(channel=user_id, text=message)
             logger.info("✅ Morning briefing sent.")
