@@ -1,3 +1,8 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
+
 def parse_command(text: str) -> str:
     """
     Takes the user's message and figures out what they want.
@@ -53,8 +58,14 @@ def handle_emails(ask_ai, fetch_emails, summarize) -> str:
     Fetches and summarizes unread emails.
     Pure function — all dependencies injected.
     """
-    emails = fetch_emails(max_results=5)
-    return summarize(emails, ask_ai)
+    try:
+        emails = fetch_emails(max_results=5)
+        if not emails:
+            return "📭 No unread emails right now. You're all caught up!"
+        return summarize(emails, ask_ai)
+    except Exception as e:
+        logger.error(f"Error fetching emails: {e}")
+        return "⚠️ Sorry, I couldn't fetch your emails right now. Please try again later."
 
 
 def handle_calendar(ask_ai, get_service, fetch_events, summarize) -> str:
@@ -62,9 +73,15 @@ def handle_calendar(ask_ai, get_service, fetch_events, summarize) -> str:
     Fetches and summarizes today's calendar events.
     Pure function — all dependencies injected.
     """
-    service = get_service()
-    events  = fetch_events(service)
-    return summarize(events, ask_ai)
+    try:
+        service = get_service()
+        events = fetch_events(service)
+        if not events:
+            return "📅 Your calendar is clear today. Enjoy the free time!"
+        return summarize(events, ask_ai)
+    except Exception as e:
+        logger.error(f"Error fetching calendar: {e}")
+        return "⚠️ Sorry, I couldn't fetch your calendar right now. Please try again later."
 
 
 def handle_brief(ask_ai, fetch_emails, summarize_emails, get_cal_service, fetch_events, summarize_calendar) -> str:
