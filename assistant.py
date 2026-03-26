@@ -67,6 +67,18 @@ def handle_calendar(ask_ai, get_service, fetch_events, summarize) -> str:
     return summarize(events, ask_ai)
 
 
+def handle_brief(ask_ai, fetch_emails, summarize_emails, get_cal_service, fetch_events, summarize_calendar) -> str:
+    """
+    Builds the full morning briefing.
+    Pure function — all dependencies injected.
+    """
+    from scheduler import build_briefing
+    return build_briefing(
+        ask_ai, fetch_emails, summarize_emails,
+        get_cal_service, fetch_events, summarize_calendar
+    )
+
+
 def process_message(text: str, ask_ai, fetch_emails, summarize_emails, get_cal_service, fetch_events, summarize_calendar) -> str:
     """
     Main router — takes a message and returns the right response.
@@ -81,6 +93,6 @@ def process_message(text: str, ask_ai, fetch_emails, summarize_emails, get_cal_s
     elif command == "calendar":
         return handle_calendar(ask_ai, get_cal_service, fetch_events, summarize_calendar)
     elif command == "brief":
-        return "🌅 Preparing your briefing... (coming soon!)"
+        return handle_brief(ask_ai, fetch_emails, summarize_emails, get_cal_service, fetch_events, summarize_calendar)
     else:
         return handle_chat(text, ask_ai)
