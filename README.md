@@ -1,14 +1,16 @@
 # PA Bot — Personal AI Assistant
 
-A personal AI assistant that integrates with Slack, Gmail, and Google Calendar.
+A personal AI assistant that integrates with Slack, Gmail, Google Calendar, and Linear.
 Built for the JiBiFlow internship project.
 
 ## What it does
 
-- Responds to @mentions in Slack with AI-powered answers
+- Responds to @mentions and DMs in Slack with AI-powered answers
 - Summarizes your unread emails on demand
 - Shows your Google Calendar events for the day
+- Fetches your open Linear issues by priority
 - Sends an automated morning briefing every day at 7:30 AM WAT
+- Sends a meeting prep card 30 minutes before every Google Meet event
 
 ## Project Structure
 ```
@@ -16,16 +18,21 @@ pa-bot/
 ├── main.py                    # Entry point
 ├── config.py                  # Environment variable loader
 ├── assistant.py               # Core logic — pure functions router
-├── scheduler.py               # Morning briefing scheduler
+├── scheduler.py               # Morning briefing + meeting prep scheduler
 ├── health.py                  # Health check endpoint (port 8000)
 ├── integrations/
 │   ├── slack_bot.py           # Slack @mentions and DMs
 │   ├── gmail_reader.py        # Gmail integration
-│   └── calendar_reader.py     # Google Calendar integration
+│   ├── calendar_reader.py     # Google Calendar integration
+│   ├── linear_reader.py       # Linear integration
+│   └── meeting_prep.py        # Meeting prep card logic
 ├── ai/
 │   └── claude_client.py       # Groq AI (llama-3.3-70b-versatile)
 ├── tests/
-│   └── test_pa.py
+│   └── test_pa.py             # 14 tests — all passing
+├── .github/
+│   └── workflows/
+│       └── deploy.yml         # CI/CD pipeline
 ├── .env.example               # Environment variable template
 └── requirements.txt
 ```
@@ -37,6 +44,7 @@ pa-bot/
 - Slack app with Socket Mode enabled
 - Google Cloud project with Gmail + Calendar APIs enabled
 - Groq API key (free tier)
+- Linear account with API key
 
 ## Setup
 
@@ -69,6 +77,7 @@ GROQ_API_KEY=your_groq_api_key
 SLACK_BOT_TOKEN=xoxb-your-bot-token
 SLACK_APP_TOKEN=xapp-your-app-token
 SLACK_USER_ID=your_slack_user_id
+LINEAR_API_KEY=your_linear_api_key
 ```
 
 ### 5. Set up Google credentials
@@ -103,8 +112,16 @@ You should see:
 | `@PA help` | Show available commands |
 | `@PA emails` | Summarize unread emails |
 | `@PA calendar today` | Show today's calendar events |
-| `@PA brief me` | Full morning briefing |
+| `@PA my issues` | Show open Linear issues by priority |
+| `@PA brief me` | Full morning briefing — emails, calendar and Linear issues |
 | `@PA <anything>` | Chat with the AI directly |
+
+## Automated Features
+
+| Feature | Schedule |
+|---|---|
+| Morning briefing | Every day at 7:30 AM WAT |
+| Meeting prep card | 30 minutes before every Google Meet event |
 
 ## Health Check
 ```bash
@@ -116,16 +133,24 @@ Expected response:
 {"status": "ok", "message": "PA Bot is running! 🤖"}
 ```
 
+## CI/CD Pipeline
+
+Every push to main:
+1. GitHub Actions runs all 14 tests automatically
+2. If tests pass — code is deployed to the Hetzner VM automatically
+3. If tests fail — deployment is blocked
+
 ## Running Tests
 ```bash
-pytest tests/
+pytest tests/ -v
 ```
 
 ## Security
 
-- All secrets are stored in .env — never committed to git
+- All secrets stored in .env — never committed to git
 - credentials.json and token.json are in .gitignore
-- venv/ is excluded from the repository
+- venv/ excluded from the repository
+- SSH keys stored in GitHub Secrets for CI/CD
 
 ## Tech Stack
 
@@ -133,5 +158,7 @@ pytest tests/
 - Slack Bolt (Socket Mode)
 - Groq API — llama-3.3-70b-versatile
 - Gmail API + Google Calendar API
+- Linear API
 - APScheduler
 - FastAPI + Uvicorn (health endpoint)
+- GitHub Actions (CI/CD)
