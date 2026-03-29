@@ -1,6 +1,7 @@
 import logging
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
+from apscheduler.triggers.interval import IntervalTrigger
 import pytz
 
 logger = logging.getLogger(__name__)
@@ -44,13 +45,16 @@ def build_briefing(ask_ai, fetch_emails, summarize_emails, get_cal_service, fetc
 
 def start_scheduler(slack_client, user_id, ask_ai, fetch_emails, summarize_emails, get_cal_service, fetch_events, summarize_calendar, fetch_issues, summarize_issues):
     """
-    Starts APScheduler to post the morning briefing at 7:30 AM WAT.
-    WAT is UTC+1, so 7:30 AM WAT = 06:30 UTC.
+    Starts APScheduler with:
+    - Morning briefing at 7:30 AM WAT daily
+    - Meeting prep card check every 5 minutes
     """
-    wat = pytz.timezone("Africa/Lagos")
+    from integrations.meeting_prep import check_and_send_prep_cards
 
+    wat = pytz.timezone("Africa/Lagos")
     scheduler = BackgroundScheduler(timezone=wat)
 
+    # Morning briefing at 7:30 AM WAT
     def send_briefing():
         logger.info("⏰ Sending morning briefing...")
         try:
@@ -71,6 +75,23 @@ def start_scheduler(slack_client, user_id, ask_ai, fetch_emails, summarize_email
         replace_existing=True
     )
 
+    # Meeting prep card check every 5 minutes
+    def check_meetings():
+        try:
+            service = get_cal_service()
+            def send_message(text):
+                slack_client.chat_postMessage(channel=user_id, text=text)
+            check_and_send_prep_cards(service, ask_ai, send_message)
+        except Exception as e:
+            logger.error(f"❌ Meeting prep check failed: {e}")
+
+    scheduler.add_job(
+        check_meetings,
+        trigger=IntervalTrigger(minutes=5),
+        id="meeting_prep",
+        replace_existing=True
+    )
+
     scheduler.start()
-    logger.info("📅 Scheduler started — briefing at 7:30 AM WAT daily.")
+    logger.info("📅 Scheduler started — briefing at 7:30 AM WAT, meeting prep every 5 mins.")
     return scheduler
