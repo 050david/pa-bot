@@ -11,6 +11,7 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
 SLACK_APP_TOKEN = os.getenv("SLACK_APP_TOKEN")
 SLACK_USER_ID   = os.getenv("SLACK_USER_ID")
+ALLOWED_USER_IDS = os.getenv("ALLOWED_USER_IDS", "").split(",")
 
 # Linear
 LINEAR_API_KEY = os.getenv("LINEAR_API_KEY")
@@ -22,11 +23,12 @@ BRIEFING_MINUTE = int(os.getenv("BRIEFING_MINUTE", 30))
 
 def validate_config():
     missing = []
-    if not GROQ_API_KEY:     missing.append("GROQ_API_KEY")
-    if not SLACK_BOT_TOKEN:  missing.append("SLACK_BOT_TOKEN")
-    if not SLACK_APP_TOKEN:  missing.append("SLACK_APP_TOKEN")
-    if not SLACK_USER_ID:    missing.append("SLACK_USER_ID")
-    if not LINEAR_API_KEY:   missing.append("LINEAR_API_KEY")
+    if not GROQ_API_KEY:        missing.append("GROQ_API_KEY")
+    if not SLACK_BOT_TOKEN:     missing.append("SLACK_BOT_TOKEN")
+    if not SLACK_APP_TOKEN:     missing.append("SLACK_APP_TOKEN")
+    if not SLACK_USER_ID:       missing.append("SLACK_USER_ID")
+    if not LINEAR_API_KEY:      missing.append("LINEAR_API_KEY")
+    if not ALLOWED_USER_IDS[0]: missing.append("ALLOWED_USER_IDS")
 
     if missing:
         raise ValueError(f"Missing required environment variables: {', '.join(missing)}")
